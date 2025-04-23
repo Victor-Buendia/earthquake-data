@@ -1,1 +1,7 @@
 logs/
+api_tests/
+venv/
+__pycache__/
+docker-volumes/*
+!docker-volumes/.gitkeep
+.env

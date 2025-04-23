@@ -1,0 +1,12 @@
+services:
+  minio:
+    ports:
+        - 9000:9000
+        - 9001:9001
+    environment:
+        MINIO_ROOT_USER: admin
+        MINIO_ROOT_PASSWORD: admin123
+    volumes:
+        - ./docker-volumes/minio/data:/data
+    image: quay.io/minio/minio
+    command: server /data --console-address ":9001"
