@@ -9,6 +9,7 @@ import logging
 from airflow.models.dag import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.decorators import dag, task
+from airflow.models.param import Param
 
 from pprint import pprint
 from minio import Minio
@@ -25,6 +26,7 @@ with DAG(
     start_date=datetime.datetime(2025, 4, 1),
     schedule="@daily",
     catchup=False,
+    params={"start": Param(type="string", default=datetime.datetime.now().isoformat().split('.')[:-1].pop() + 'Z')},
 ):
 
     @task(task_id="raw_clockify__time_entries")
@@ -32,7 +34,7 @@ with DAG(
         api = ClockifyInteractor(
             workspaceId=os.environ["CLOCKIFY_WORKSPACE_ID"], userId=os.environ["CLOCKIFY_USER_ID"]
         )
-        res = api.get_time_entries().text
+        res = api.get_time_entries(start=kwargs["params"]["start"]).text
 
         client = boto3.client(
             "s3",
