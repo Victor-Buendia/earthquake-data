@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 BUCKET_NAME = "raw"
 
 @task(task_id="raw_clockify__time_entries__parquet")
-def clockify_parquet(BUCKET_NAME, **kwargs):
+def raw_clockify__time_entries__parquet(BUCKET_NAME, **kwargs):
     task_start_date: date = datetime.date(kwargs["data_interval_start"])
 
     client = boto3.client(

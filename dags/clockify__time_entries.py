@@ -8,21 +8,21 @@ from airflow.decorators import dag
 from datetime import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from src.tasks.staging.clockify_ingestion import clockify_ingestion
-from src.tasks.staging.clockify_parquet import clockify_parquet
+from src.tasks.raw.raw_clockify__time_entries import raw_clockify__time_entries
+from src.tasks.raw.raw_clockify__time_entries__parquet import raw_clockify__time_entries__parquet
 
 logger = logging.getLogger(__name__)
 
 BUCKET_NAME = "raw"
 
 with DAG(
-    dag_id="clockify_pipeline",
+    dag_id="clockify__time_entries__pipeline",
     start_date=datetime(2025, 4, 20),
     schedule="@daily",
     catchup=True,
 ) as dag:
 
-    raw = clockify_ingestion(BUCKET_NAME)
-    parquet = clockify_parquet(BUCKET_NAME)
+    raw = raw_clockify__time_entries(BUCKET_NAME)
+    parquet = raw_clockify__time_entries__parquet(BUCKET_NAME)
 
     raw >> parquet

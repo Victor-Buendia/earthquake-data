@@ -14,7 +14,7 @@ from src.ClockifyAPI import ClockifyInteractor
 logger = logging.getLogger(__name__)
 
 @task(task_id="raw_clockify__time_entries")
-def clockify_ingestion(BUCKET_NAME, **kwargs):
+def raw_clockify__time_entries(BUCKET_NAME, **kwargs):
     api = ClockifyInteractor(
         workspaceId=os.environ["CLOCKIFY_WORKSPACE_ID"],
         userId=os.environ["CLOCKIFY_USER_ID"],
