@@ -39,7 +39,6 @@ class ClockifyInteractor:
 
 
 if __name__ == "__main__":
-    from pprint import pprint
     from dotenv import load_dotenv
     import json
 
