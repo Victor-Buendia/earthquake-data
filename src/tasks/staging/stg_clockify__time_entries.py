@@ -29,24 +29,6 @@ def stg_clockify__time_entries(RAW_BUCKET_NAME, WAREHOUSE_BUCKET_NAME, **kwargs)
     spark = (
         SparkSession.builder.master("spark://spark-master:7077")
         .appName("stg_clockify__time_entries")
-        .config(
-            "spark.jars.packages",
-            "org.apache.hadoop:hadoop-aws:3.3.4,org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.2",
-        )
-        .config("spark.hadoop.fs.s3a.access.key", os.environ["MINIO_ACCESS_KEY"])
-        .config("spark.hadoop.fs.s3a.secret.key", os.environ["MINIO_SECRET_KEY"])
-        .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000")
-        .config("spark.hadoop.fs.s3a.path.style.access", "true")
-        .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
-        .config(
-            "spark.sql.catalog.clockify_catalog",
-            "org.apache.iceberg.spark.SparkCatalog",
-        )
-        .config("spark.sql.catalog.clockify_catalog.type", "hadoop")
-        .config(
-            "spark.sql.catalog.clockify_catalog.warehouse",
-            f"s3a://{WAREHOUSE_BUCKET_NAME}/iceberg/",
-        )
         .getOrCreate()
     )
 
