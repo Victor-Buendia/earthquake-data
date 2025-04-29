@@ -2,3 +2,5 @@ requests
 minio
 boto3
 pandas
+pyspark
+jupyterlab
