@@ -1,17 +1,15 @@
-import sys
 import os
-import boto3
-import botocore
 import logging
 
 from airflow.decorators import task
 
 from datetime import datetime, timedelta
 
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from src.ClockifyAPI import ClockifyInteractor
+from src.providers.S3 import S3BucketManager
 
 logger = logging.getLogger(__name__)
+
 
 @task(task_id="raw_clockify__time_entries")
 def raw_clockify__time_entries(BUCKET_NAME, **kwargs):
@@ -33,24 +31,14 @@ def raw_clockify__time_entries(BUCKET_NAME, **kwargs):
     elif len(res.text.encode("utf-8")) == 0:
         raise Exception("No data found")
 
-    client = boto3.client(
-        "s3",
-        aws_access_key_id=os.environ["MINIO_ACCESS_KEY"],
-        aws_secret_access_key=os.environ["MINIO_SECRET_KEY"],
-        verify=False,
-        use_ssl=False,
-        endpoint_url="http://minio:9000",
+    s3_manager = S3BucketManager(
+        access_key=os.environ["MINIO_ACCESS_KEY"],
+        secret_key=os.environ["MINIO_SECRET_KEY"],
+        endpoint_url=os.environ["MINIO_ENDPOINT_URL"],
     )
+    s3_manager.create_bucket(BUCKET_NAME)
 
-    try:
-        client.create_bucket(Bucket=BUCKET_NAME)
-    except botocore.exceptions.ClientError as e:
-        if e.response["Error"]["Code"] == "BucketAlreadyOwnedByYou":
-            logger.info("Bucket already exists. Skipping creation.")
-        else:
-            raise e
-
-    result = client.put_object(
+    result = s3_manager.client.put_object(
         Bucket=BUCKET_NAME,
         Key=f"clockify/time-entries/{datetime.strftime(task_start_date, '%Y-%m-%d')}.json",
         Body=res.text.encode("utf-8"),

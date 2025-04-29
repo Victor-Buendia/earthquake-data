@@ -1,30 +1,20 @@
 import os
 import sys
 
+
 def stg_clockify__time_entries(RAW_BUCKET_NAME, WAREHOUSE_BUCKET_NAME, **kwargs):
-    import boto3
-    import botocore
     import logging
     from pyspark.sql import SparkSession
+    from src.providers.S3 import S3BucketManager
 
     logger = logging.getLogger(__name__)
 
-    client = boto3.client(
-        "s3",
-        aws_access_key_id=os.environ["MINIO_ACCESS_KEY"],
-        aws_secret_access_key=os.environ["MINIO_SECRET_KEY"],
-        verify=False,
-        use_ssl=False,
-        endpoint_url="http://minio:9000",
+    s3_manager = S3BucketManager(
+        access_key=os.environ["MINIO_ACCESS_KEY"],
+        secret_key=os.environ["MINIO_SECRET_KEY"],
+        endpoint_url=os.environ["MINIO_ENDPOINT_URL"],
     )
-
-    try:
-        client.create_bucket(Bucket=WAREHOUSE_BUCKET_NAME)
-    except botocore.exceptions.ClientError as e:
-        if e.response["Error"]["Code"] == "BucketAlreadyOwnedByYou":
-            logger.info("Bucket already exists. Skipping creation.")
-        else:
-            raise e
+    s3_manager.create_bucket(WAREHOUSE_BUCKET_NAME)
 
     spark = (
         SparkSession.builder.master("spark://spark-master:7077")

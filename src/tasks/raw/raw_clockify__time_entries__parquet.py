@@ -1,5 +1,4 @@
 import os
-import boto3
 import logging
 import json
 import pandas as pd
@@ -8,24 +7,24 @@ from airflow.decorators import task
 
 from datetime import datetime
 
+from src.providers.S3 import S3BucketManager
+
 logger = logging.getLogger(__name__)
 
 BUCKET_NAME = "raw"
+
 
 @task(task_id="raw_clockify__time_entries__parquet")
 def raw_clockify__time_entries__parquet(BUCKET_NAME, **kwargs):
     task_start_date: date = datetime.date(kwargs["data_interval_start"])
 
-    client = boto3.client(
-        "s3",
-        aws_access_key_id=os.environ["MINIO_ACCESS_KEY"],
-        aws_secret_access_key=os.environ["MINIO_SECRET_KEY"],
-        verify=False,
-        use_ssl=False,
-        endpoint_url="http://minio:9000",
+    s3_manager = S3BucketManager(
+        access_key=os.environ["MINIO_ACCESS_KEY"],
+        secret_key=os.environ["MINIO_SECRET_KEY"],
+        endpoint_url=os.environ["MINIO_ENDPOINT_URL"],
     )
 
-    data = client.get_object(
+    data = s3_manager.client.get_object(
         Bucket=BUCKET_NAME,
         Key=f"clockify/time-entries/{datetime.strftime(task_start_date, '%Y-%m-%d')}.json",
     )
@@ -35,14 +34,25 @@ def raw_clockify__time_entries__parquet(BUCKET_NAME, **kwargs):
         logger.error("No data found")
         return
 
-    folder_path = f"/tmp/{datetime.now().isoformat()}/{BUCKET_NAME}/clockify/time-entries/parquet"
+    folder_path = (
+        f"/tmp/{datetime.now().isoformat()}/{BUCKET_NAME}/clockify/time-entries/parquet"
+    )
     os.makedirs(folder_path, exist_ok=True)
     print(pd.DataFrame(data))
-    pd.DataFrame(data).to_parquet(os.path.join(folder_path, f"{datetime.strftime(task_start_date, '%Y-%m-%d')}.parquet"))
+    pd.DataFrame(data).to_parquet(
+        os.path.join(
+            folder_path, f"{datetime.strftime(task_start_date, '%Y-%m-%d')}.parquet"
+        )
+    )
 
-    with open(os.path.join(folder_path, f"{datetime.strftime(task_start_date, '%Y-%m-%d')}.parquet"), "rb") as f:
-        client.put_object(
+    with open(
+        os.path.join(
+            folder_path, f"{datetime.strftime(task_start_date, '%Y-%m-%d')}.parquet"
+        ),
+        "rb",
+    ) as f:
+        s3_manager.client.put_object(
             Bucket=BUCKET_NAME,
             Key=f"clockify/time-entries/parquet/{datetime.strftime(task_start_date, '%Y-%m-%d')}.parquet",
-            Body=f.read()
+            Body=f.read(),
         )

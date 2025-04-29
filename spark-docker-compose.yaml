@@ -5,6 +5,7 @@ x-common-config: &common-config
   environment: &common-env
     MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
     MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    MINIO_ENDPOINT_URL: ${MINIO_ENDPOINT_URL}
     
     SPARK_MODE: master
     SPARK_RPC_AUTHENTICATION_ENABLED: no

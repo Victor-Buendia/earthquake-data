@@ -60,6 +60,8 @@ x-airflow-common:
     CLOCKIFY_USER_ID: ${CLOCKIFY_USER_ID}
     MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
     MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    MINIO_ENDPOINT_URL: ${MINIO_ENDPOINT_URL}
+    PYTHONPATH: /opt/airflow:${PYTHONPATH:-}
 
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
