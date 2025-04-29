@@ -1,10 +1,7 @@
 import os
+import sys
 
-# from airflow.decorators import task
-
-
-# @task.pyspark(task_id="stg_clockify__time_entries")
-def stg_clockify__time_entries(STG_BUCKET_NAME, **kwargs):
+def stg_clockify__time_entries(RAW_BUCKET_NAME, WAREHOUSE_BUCKET_NAME, **kwargs):
     import boto3
     import botocore
     import logging
@@ -22,7 +19,7 @@ def stg_clockify__time_entries(STG_BUCKET_NAME, **kwargs):
     )
 
     try:
-        client.create_bucket(Bucket=STG_BUCKET_NAME)
+        client.create_bucket(Bucket=WAREHOUSE_BUCKET_NAME)
     except botocore.exceptions.ClientError as e:
         if e.response["Error"]["Code"] == "BucketAlreadyOwnedByYou":
             logger.info("Bucket already exists. Skipping creation.")
@@ -30,7 +27,7 @@ def stg_clockify__time_entries(STG_BUCKET_NAME, **kwargs):
             raise e
 
     spark = (
-        SparkSession.builder.master("spark://spark:7077")
+        SparkSession.builder.master("spark://spark-master:7077")
         .appName("stg_clockify__time_entries")
         .config(
             "spark.jars.packages",
@@ -47,16 +44,23 @@ def stg_clockify__time_entries(STG_BUCKET_NAME, **kwargs):
         )
         .config("spark.sql.catalog.clockify_catalog.type", "hadoop")
         .config(
-            "spark.sql.catalog.clockify_catalog.warehouse", f"s3a://{STG_BUCKET_NAME}/iceberg/"
+            "spark.sql.catalog.clockify_catalog.warehouse",
+            f"s3a://{WAREHOUSE_BUCKET_NAME}/iceberg/",
         )
         .getOrCreate()
     )
 
-    data = spark.read.parquet("s3a://raw/clockify/time-entries/parquet/*.parquet")
+    data = spark.read.parquet(
+        f"s3a://{RAW_BUCKET_NAME}/clockify/time-entries/parquet/*.parquet"
+    )
     data.show()
 
-    data.writeTo("clockify_catalog.bronze.time_entries").using("iceberg").createOrReplace()
+    data.writeTo("clockify_catalog.bronze.time_entries").using(
+        "iceberg"
+    ).createOrReplace()
 
 
 if __name__ == "__main__":
-    stg_clockify__time_entries("staging")
+    RAW_BUCKET_NAME = sys.argv[1]
+    WAREHOUSE_BUCKET_NAME = sys.argv[2]
+    stg_clockify__time_entries(RAW_BUCKET_NAME, WAREHOUSE_BUCKET_NAME)

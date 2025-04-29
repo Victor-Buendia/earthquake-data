@@ -16,13 +16,13 @@ x-common-config: &common-config
     - ./src:/pyspark
 
 services:
-  spark:
+  spark-master:
     <<: *common-config
     build:
       context: .
       dockerfile: spark.Dockerfile
     ports:
-      - '8088:8080'
+      - 8088:8080
 
   spark-worker:
     <<: *common-config
@@ -32,14 +32,14 @@ services:
     environment:
       <<: *common-env
       SPARK_MODE: worker
-      SPARK_MASTER_URL: spark://spark:7077
+      SPARK_MASTER_URL: spark://spark-master:7077
       SPARK_WORKER_MEMORY: 1G
       SPARK_WORKER_CORES: 1
 
   jupyter:
     <<: *common-config
     depends_on:
-      - spark
+      - spark-master
     build:
       context: .
       dockerfile: spark.Dockerfile
