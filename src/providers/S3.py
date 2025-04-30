@@ -28,10 +28,10 @@ class S3BucketManager:
 
 if __name__ == "__main__":
     # Usage
-    WAREHOUSE_BUCKET_NAME = "lakehouse"
+    WAREHOUSE_BUCKET_NAME = os.environ["WAREHOUSE_BUCKET_NAME"]
     s3_manager = S3BucketManager(
         access_key=os.environ["MINIO_ACCESS_KEY"],
         secret_key=os.environ["MINIO_SECRET_KEY"],
-        endpoint_url="http://minio:9000",
+        endpoint_url=os.environ["MINIO_ENDPOINT_URL"],
     )
     s3_manager.create_bucket(WAREHOUSE_BUCKET_NAME)

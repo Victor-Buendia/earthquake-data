@@ -6,6 +6,8 @@ x-common-config: &common-config
     MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
     MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
     MINIO_ENDPOINT_URL: ${MINIO_ENDPOINT_URL}
+    WAREHOUSE_BUCKET_NAME: ${WAREHOUSE_BUCKET_NAME}
+    RAW_BUCKET_NAME: ${RAW_BUCKET_NAME}
     
     SPARK_MODE: master
     SPARK_RPC_AUTHENTICATION_ENABLED: no
@@ -13,7 +15,7 @@ x-common-config: &common-config
     SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
     SPARK_SSL_ENABLED: no
     SPARK_USER: spark
-  volumes:
+  volumes: &common-volumes
     - ./src:/src
 
 services:
@@ -38,7 +40,6 @@ services:
       SPARK_WORKER_CORES: 1
 
   jupyter:
-    <<: *common-config
     depends_on:
       - spark-master
     build:
@@ -49,8 +50,10 @@ services:
       - 8888:8888
     volumes:
       - ./jupyter:/app
+      - ./src:/src
     working_dir: /app
     environment:
       <<: *common-env
       JUPYTER_ENABLE_LAB: yes
+      PYTHONPATH: /:/opt/bitnami/spark/python/
 

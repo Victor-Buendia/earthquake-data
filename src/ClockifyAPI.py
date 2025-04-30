@@ -49,5 +49,4 @@ if __name__ == "__main__":
         userId=os.environ["CLOCKIFY_USER_ID"],
     )
     res = api.get_time_entries(start="2020-01-01T00:00:00Z")
-    print(os.environ.get("CLOCKIFY_API_KEY", ""))
     print(json.dumps(json.loads(res.text), indent=2))

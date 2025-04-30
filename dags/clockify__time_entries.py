@@ -15,8 +15,8 @@ from src.tasks.raw.raw_clockify__time_entries__parquet import (
 
 logger = logging.getLogger(__name__)
 
-RAW_BUCKET_NAME = "raw"
-WAREHOUSE_BUCKET_NAME = "lakehouse"
+RAW_BUCKET_NAME = os.environ["RAW_BUCKET_NAME"]
+WAREHOUSE_BUCKET_NAME = os.environ["WAREHOUSE_BUCKET_NAME"]
 
 with DAG(
     dag_id="clockify__time_entries__pipeline",
