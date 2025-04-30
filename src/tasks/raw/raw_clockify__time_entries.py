@@ -45,5 +45,3 @@ def raw_clockify__time_entries(BUCKET_NAME, **kwargs):
     )
 
     logger.info(result)
-
-    return

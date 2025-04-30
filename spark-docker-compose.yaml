@@ -14,7 +14,7 @@ x-common-config: &common-config
     SPARK_SSL_ENABLED: no
     SPARK_USER: spark
   volumes:
-    - ./src:/pyspark
+    - ./src:/src
 
 services:
   spark-master:

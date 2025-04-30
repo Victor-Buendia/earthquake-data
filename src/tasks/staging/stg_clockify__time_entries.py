@@ -9,12 +9,11 @@ def stg_clockify__time_entries(RAW_BUCKET_NAME, WAREHOUSE_BUCKET_NAME, **kwargs)
 
     logger = logging.getLogger(__name__)
 
-    s3_manager = S3BucketManager(
+    S3BucketManager(
         access_key=os.environ["MINIO_ACCESS_KEY"],
         secret_key=os.environ["MINIO_SECRET_KEY"],
         endpoint_url=os.environ["MINIO_ENDPOINT_URL"],
-    )
-    s3_manager.create_bucket(WAREHOUSE_BUCKET_NAME)
+    ).create_bucket(WAREHOUSE_BUCKET_NAME)
 
     spark = (
         SparkSession.builder.master("spark://spark-master:7077")
