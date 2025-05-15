@@ -18,8 +18,24 @@ def stg_clockify__time_entries(RAW_BUCKET_NAME, WAREHOUSE_BUCKET_NAME, **kwargs)
     spark = (
         SparkSession.builder.master("spark://spark-master:7077")
         .appName("stg_clockify__time_entries")
+        .config(
+            "spark.sql.catalog.clockify_catalog",
+            "org.apache.iceberg.spark.SparkCatalog",
+        )
+        .config("spark.sql.catalog.clockify_catalog.type", "hive")
+        .config(
+            "spark.sql.catalog.clockify_catalog.uri",
+            "thrift://metastore:9083",
+        )
+        .config(
+            "spark.sql.extensions",
+            "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+        )
+        .enableHiveSupport()
         .getOrCreate()
     )
+
+    spark.sql("CREATE DATABASE IF NOT EXISTS clockify_catalog.bronze")
 
     data = spark.read.parquet(
         f"s3a://{RAW_BUCKET_NAME}/clockify/time-entries/parquet/*.parquet"

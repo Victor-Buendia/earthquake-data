@@ -21,10 +21,17 @@ WAREHOUSE_BUCKET_NAME = os.environ["WAREHOUSE_BUCKET_NAME"]
 with DAG(
     dag_id="clockify__time_entries__pipeline",
     start_date=datetime(2025, 4, 22),
+    end_date=datetime(2025, 4, 23),
     schedule="@daily",
     catchup=True,
     max_active_runs=1,
 ) as dag:
+
+    jars = []
+    for a, b, c in os.walk("/opt/bitnami/spark/jars"):
+        for jar in c:
+            jars.append(os.path.join(a, jar))
+    jars = ",".join(jars)
 
     raw_clockify__time_entries = raw_clockify__time_entries(RAW_BUCKET_NAME)
     raw_clockify__time_entries__parquet = SparkSubmitOperator(
@@ -33,7 +40,7 @@ with DAG(
         conn_id="spark_docker",
         application_args=[RAW_BUCKET_NAME, "{{ ds }}"],
         conf={
-            "spark.jars.packages": "org.apache.hadoop:hadoop-aws:3.3.4",
+            "spark.jars": jars,
             "spark.hadoop.fs.s3a.access.key": os.environ["MINIO_ACCESS_KEY"],
             "spark.hadoop.fs.s3a.secret.key": os.environ["MINIO_SECRET_KEY"],
             "spark.hadoop.fs.s3a.endpoint": os.environ["MINIO_ENDPOINT_URL"],
@@ -49,15 +56,17 @@ with DAG(
         conn_id="spark_docker",
         application_args=[RAW_BUCKET_NAME, WAREHOUSE_BUCKET_NAME],
         conf={
-            "spark.jars.packages": "org.apache.hadoop:hadoop-aws:3.3.4,org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.2",
+            "spark.jars": jars,
             "spark.hadoop.fs.s3a.access.key": os.environ["MINIO_ACCESS_KEY"],
             "spark.hadoop.fs.s3a.secret.key": os.environ["MINIO_SECRET_KEY"],
             "spark.hadoop.fs.s3a.endpoint": os.environ["MINIO_ENDPOINT_URL"],
             "spark.hadoop.fs.s3a.path.style.access": "true",
             "spark.hadoop.fs.s3a.connection.ssl.enabled": "false",
+            "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
             "spark.sql.catalog.clockify_catalog": "org.apache.iceberg.spark.SparkCatalog",
-            "spark.sql.catalog.clockify_catalog.type": "hadoop",
-            "spark.sql.catalog.clockify_catalog.warehouse": f"s3a://{WAREHOUSE_BUCKET_NAME}/iceberg/",
+            "spark.sql.catalog.clockify_catalog.type": "hive",
+            "spark.sql.catalog.clockify_catalog.uri": "thrift://metastore:9083",
+            "spark.sql.catalog.clockify_catalog.warehouse": f"s3a://{os.environ['WAREHOUSE_BUCKET_NAME']}/warehouse",
         },
         verbose=True,
     )
